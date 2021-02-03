@@ -50,6 +50,12 @@ jobs:
           PY_COLORS: '1'
           TZ: 'Asia/Tokyo'
 
+      - name: Show Ansible version
+        run: ansible --version
+
+      - name: Show Molecule version
+        run: molecule --version
+
   molecule-vm:
     runs-on: ubuntu-latest
     strategy:
@@ -72,6 +78,10 @@ jobs:
       - name: Create galaxy dependencies file in 'molecule/vm/'
         run: |
           cp roles/requirements.yml molecule/vm/requirements.yml
+
+      - name: Install required Ansible Collections
+        run: |
+          ansible-galaxy collection install community.molecule
 
       - name: Set latest AMI image id to environment variables
         run: |
@@ -109,6 +119,12 @@ jobs:
           # TIMESTAMP: sotred in system environment variables
           TZ: 'Asia/Tokyo'
           VPC_SUBNET_ID: ${{ secrets.VPC_SUBNET_ID }}
+
+      - name: Show Ansible version
+        run: ansible --version
+
+      - name: Show Molecule version
+        run: molecule --version
 
   trailing-whitespace:
     name: Find Trailing Whitespace
