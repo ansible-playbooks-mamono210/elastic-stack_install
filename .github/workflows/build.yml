@@ -126,6 +126,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r molecule/requirements/vm
+          ansible-galaxy install -r molecule/vm/requirements.yml
 
       - name: Install required Ansible Collections
         run: |
@@ -150,6 +151,8 @@ jobs:
           AWS_ACCESS_KEY_ID_1: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
           AWS_SECRET_ACCESS_KEY_1: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          # AWSIAM_USER: sotred in system environment variables
+          # AWSIAM_POLICY_NAME: sotred in system environment variables
           MOLECULE_VERBOSITY: 0
           PROFILE_TASKS_SORT_ORDER: 'none'
           PROFILE_TASKS_TASK_OUTPUT_LIMIT: '200'
@@ -158,7 +161,7 @@ jobs:
 
       - name: Set latest AMI image id to environment variables
         run: |
-          sleep 10
+          sleep 20
 
           AMI_ID=$(aws ec2 describe-images \
           --owners "${{ secrets.AMI_OWNER_ID }}" \
@@ -172,10 +175,16 @@ jobs:
       - name: Set environment variables with timestamp for making sure Molecule would create unique AWS resources
         run: |
           TIMESTAMP=$(date --date "9 hours" "+%Y%m%d_%H:%M:%S")
+          VALUE=molecule_elastic-stack_install__${{ matrix.distro }}_${TIMESTAMP}
+          echo "PLATFORM_NAME=${VALUE}" >> $GITHUB_ENV
+          echo "KEYPAIR_NAME=${VALUE}" >> $GITHUB_ENV
+          echo "SECURITY_GROUP_NAME=${VALUE}" >> $GITHUB_ENV
+          echo "TAG_NAME=${VALUE}" >> $GITHUB_ENV
 
-          echo "PLATFORM_NAME=elastic-stack_install_molecule_${{ matrix.distro }}_${TIMESTAMP}" >> $GITHUB_ENV
-          echo "KEYPAIR_NAME=elastic-stack_install_molecule_${{ matrix.distro }}_${TIMESTAMP}" >> $GITHUB_ENV
-          echo "SECURITY_GROUP_NAME=elastic-stack_install_molecule_${{ matrix.distro }}_${TIMESTAMP}" >> $GITHUB_ENV
+      - name: Set AWS resource creator name to system environment variables
+        run: |
+          author_email=$(git show -s --format='%ae' ${{ github.sha }})
+          echo "CREATED_BY=$author_email" >> $GITHUB_ENV
 
       - name: Test with molecule
         run: |
@@ -185,6 +194,8 @@ jobs:
           ANSIBLE_FORCE_COLOR: '1'
           ANSIBLE_PYTHON_INTERPRETER: ${{ matrix.python_interpreter }}
           AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+          # CREATED_BY: sotred in system environment variables
+          # KEYPAIR_NAME: sotred in system environment variables
           # KEYPAIR_NAME: sotred in system environment variables
           MOLECULE_VERBOSITY: 0
           # PLATFORM_NAME: sotred in system environment variables
@@ -192,6 +203,7 @@ jobs:
           PROFILE_TASKS_TASK_OUTPUT_LIMIT: '200'
           PY_COLORS: '1'
           # SECURITY_GROUP_NAME: sotred in system environment variables
+          # TAG_NAME: sotred in system environment variables
           TZ: 'Asia/Tokyo'
           VPC_SUBNET_ID: ${{ secrets.VPC_SUBNET_ID }}
 
@@ -203,6 +215,8 @@ jobs:
           AWS_ACCESS_KEY_ID_1: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
           AWS_SECRET_ACCESS_KEY_1: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          # AWSIAM_USER: sotred in system environment variables
+          # AWSIAM_POLICY_NAME: sotred in system environment variables
           MOLECULE_VERBOSITY: 0
           PROFILE_TASKS_SORT_ORDER: 'none'
           PROFILE_TASKS_TASK_OUTPUT_LIMIT: '200'
