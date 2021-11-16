@@ -102,7 +102,7 @@ jobs:
           PY_COLORS: '1'
 
   vm-centos7:
-    uses: mamono210-github-actions-workflows/molecule-ec2/.github/workflows/workflows.yml@main
+    uses: github-actions-reusable-workflows/molecule-ec2/.github/workflows/workflows.yml@main
     with:
       ami-name: centos7-1*
       molecule-scenario: vm
@@ -117,7 +117,7 @@ jobs:
       VPC_SUBNET_ID: ${{ secrets.VPC_SUBNET_ID }}
 
   vm-centos8:
-    uses: mamono210-github-actions-workflows/molecule-ec2/.github/workflows/workflows.yml@main
+    uses: github-actions-reusable-workflows/molecule-ec2/.github/workflows/workflows.yml@main
     with:
       ami-name: centos8-1*
       molecule-scenario: vm
