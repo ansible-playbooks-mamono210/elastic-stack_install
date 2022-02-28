@@ -30,11 +30,11 @@ rules:
   line-length:
     level: error
     ignore: |
+       .circleci/config.yml
        .github/workflows/build.yml
        molecule/awsiam/converge.yml
        molecule/vm/create.yml
        molecule/vm/destroy.yml
-       var_file_example/test_vars.yml
   new-line-at-end-of-file: enable
   new-lines: enable
   octal-values: disable
