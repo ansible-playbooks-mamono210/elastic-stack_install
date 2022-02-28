@@ -42,56 +42,6 @@ jobs:
           | GREP_COLORS='mt=01;34' egrep --color=always '\.' \
           | GREP_COLORS='mt=01;33' egrep --color=always 'detect-secrets.* '
 
-  molecule-docker:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        distro:
-          - centos7jp
-        python-version:
-          - 3.8
-          - 3.9
-
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Install dependencies
-        run: pip install -r molecule/requirements/docker
-
-      - name: Create galaxy dependencies file in 'molecule/docker/'
-        run: cp roles/requirements.yml molecule/docker/requirements.yml
-
-      - name: Test with molecule
-        run: |
-          molecule test --scenario-name docker
-        env:
-          ANSIBLE_FORCE_COLOR: '1'
-          MOLECULE_DISTRO: ${{ matrix.distro }}
-          PROFILE_TASKS_SORT_ORDER: 'none'
-          PROFILE_TASKS_TASK_OUTPUT_LIMIT: '200'
-          PY_COLORS: '1'
-          TZ: 'Asia/Tokyo'
-
-      - name: Show Ansible version
-        run: |
-          pip list | grep ansible \
-          | GREP_COLORS='mt=01;34' egrep --color=always '[[:digit:]]' \
-          | GREP_COLORS='mt=01;34' egrep --color=always '\.' \
-          | GREP_COLORS='mt=01;33' egrep --color=always 'ansible.* '
-          ansible --version
-
-      - name: Show molecule version
-        run: |
-          molecule --version
-        env:
-          PY_COLORS: '1'
-
   vm-centos7:
     uses: github-actions-reusable-workflows/molecule-ec2/.github/workflows/workflows.yml@main
     with:

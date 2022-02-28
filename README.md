@@ -1,3 +1,4 @@
+[![CircleCI](https://circleci.com/gh/ansible-playbooks-mamono210/elastic-stack_install/tree/main.svg?style=svg)](https://circleci.com/gh/ansible-playbooks-mamono210/elastic-stack_install/tree/main)
 [![](https://github.com/ansible-playbooks-centos7/elastic-stack_install/workflows/build/badge.svg)](https://github.com/ansible-playbooks-centos7/elastic-stack_install/actions?query=workflow%3Abuild)
 
 This playbook installs Elastic Stack on CentOS7/CentOS8.
