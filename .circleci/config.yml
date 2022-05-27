@@ -24,7 +24,7 @@ executors:
     resource_class: small
 
 orbs:
-  aws-cli: circleci/aws-cli@2.1.0
+  aws-cli: circleci/aws-cli@3.1.1
 
 jobs:
   ansible-lint:
@@ -91,27 +91,12 @@ jobs:
         type: string
     steps:
       - checkout
-      - aws-cli/install
-      - run:
-          name: Install jp
-          command: |
-            sudo apt -y update
-            sudo apt -y install jq
-      - run:
-          name: Create AWS access key pair
-          command: |
-            aws_sts_credentials=$(aws sts assume-role-with-web-identity \
-            --role-arn ${AWS_ROLE_ARN} \
-            --web-identity-token ${CIRCLE_OIDC_TOKEN} \
-            --role-session-name "<< parameters.molecule-ec2-tag>>" \
-            --duration-seconds 1800 \
-            --query "Credentials" \
-            --output "json")
-
-            echo export AWS_ACCESS_KEY_ID="$(echo $aws_sts_credentials | jq -r '.AccessKeyId')" >> $BASH_ENV
-            echo export AWS_SECRET_ACCESS_KEY="$(echo $aws_sts_credentials | jq -r '.SecretAccessKey')" >> $BASH_ENV
-            echo export AWS_SESSION_TOKEN="$(echo $aws_sts_credentials | jq -r '.SessionToken')" >> $BASH_ENV
-            source $BASH_ENV
+      - aws-cli/setup
+      - aws-cli/setup:
+          profile-name: default
+          role-arn: ${AWS_ROLE_ARN}
+          role-session-name: "<< parameters.molecule-ec2-tag >>"
+          session-duration: '1800'
       - run:
           name: Set timestamp for making sure Molecule would create unique AWS resources
           command: |
@@ -150,9 +135,7 @@ jobs:
           environment:
             ANSIBLE_FORCE_COLOR: '1'
             # AMI_NAME: stored in CircleCI environment variables
-            # AWS_ACCESS_KEY_ID: sotred in system environment variables
             # AWS_DEFAULT_REGION: sotred in CircleCI environment variables
-            # AWS_SECRET_ACCESS_KEY: stored in system environment variables
             # CREATED_BY: stored in CircleCI environment variables
             # EC2_REGION: stored in CircleCI environment variables
             # INSTANCE_TYPE: stored in CircleCI environment variables
