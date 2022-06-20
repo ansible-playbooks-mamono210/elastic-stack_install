@@ -203,13 +203,13 @@ workflows:
           molecule-ami-name: 'centos7'
           molecule-instance-type: 't2.medium'
           molecule-ec2-tag: 'molecule_elastick_stack_install_centos7'
-          context: aws_oidc
+          context: AWS_OPENID_CONNECT_TOKENS
           requires:
             - ansible-lint
       - molecule-ec2:
           molecule-ami-name: 'centos-stream8'
           molecule-instance-type: 't2.medium'
           molecule-ec2-tag: 'molecule_elastick_stack_install_centos_stream8'
-          context: aws_oidc
+          context: AWS_OPENID_CONNECT_TOKENS
           requires:
             - ansible-lint
