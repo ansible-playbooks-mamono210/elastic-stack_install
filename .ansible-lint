@@ -1,5 +1,4 @@
 ---
 parseable: true
 skip_list:
-  - name[play]
   - name[casing]
