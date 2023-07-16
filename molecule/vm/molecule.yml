@@ -15,10 +15,6 @@ platforms:
         from_port: 22
         to_port: 22
         cidr_ip: '0.0.0.0/0'
-      - proto: icmp
-        from_port: 8
-        to_port: -1
-        cidr_ip: '0.0.0.0/0'
     security_group_rules_egress:
       - proto: -1
         from_port: 0

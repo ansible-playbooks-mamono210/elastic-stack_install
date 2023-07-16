@@ -6,10 +6,6 @@ executors:
     machine:
       image: ubuntu-2004:202111-02
     resource_class: medium
-  molecule-ec2:
-    docker:
-      - image: ghcr.io/docker-images-mamono210/circleci-executors_molecule/molecule:ec2
-    resource_class: small
   trailing-whitespace:
     docker:
       - image: ghcr.io/docker-images-mamono210/circleci-executors/trailing-whitespace:latest
@@ -18,6 +14,7 @@ executors:
 orbs:
   ansible-lint: orbss/ansible-lint@0.0.3
   aws-cli: circleci/aws-cli@3.1.1
+  molecule-ec2: orbss/molecule-ec2@0.0.7
   yamllint: orbss/yamllint@0.0.4
 
 jobs:
@@ -58,15 +55,24 @@ jobs:
       - run:
           name: Show Molecule version
           command: molecule --version
-
   molecule-ec2:
-    executor: molecule-ec2
+    executor: molecule-ec2/default
     parameters:
-      molecule-ami-name:
+      ansible-user:
         type: string
-      molecule-instance-type:
+      aws-ami-name:
         type: string
-      molecule-ec2-tag:
+      aws-ami-owner-id:
+        type: string
+      aws-instance-type:
+        type: string
+      aws-resource-name:
+        type: string
+      aws-vpc-subnet-id:
+        type: string
+      circleci-timeout:
+        type: string
+      molecule-scenario-name:
         type: string
     steps:
       - checkout
@@ -74,62 +80,17 @@ jobs:
       - aws-cli/setup:
           profile-name: default
           role-arn: ${AWS_ROLE_ARN}
-          role-session-name: "<< parameters.molecule-ec2-tag >>"
-          session-duration: '1800'
-      - run:
-          name: Set timestamp for making sure Molecule would create unique AWS resources
-          command: |
-            TIMESTAMP=$(date --date "9 hours" "+%Y%m%d_%H:%M:%S")
-            AUTHOR_EMAIL=$(git show -s --format='%ae' ${CIRCLE_SHA1})
-
-            echo "export CREATED_BY=${AUTHOR_EMAIL}" >> $BASH_ENV
-            echo "export KEYPAIR_NAME=<< parameters.molecule-ec2-tag >>_${TIMESTAMP}" >> $BASH_ENV
-            echo "export PLATFORM_NAME=<< parameters.molecule-ec2-tag >>_${TIMESTAMP}" >> $BASH_ENV
-            echo "export SECURITY_GROUP_NAME=<< parameters.molecule-ec2-tag >>_${TIMESTAMP}" >> $BASH_ENV
-            echo "export TAG_NAME=<< parameters.molecule-ec2-tag >>_${TIMESTAMP}" >> $BASH_ENV
-            source $BASH_ENV
-      - run:
-          name: Set EC2 instance type
-          command: |
-            echo "export INSTANCE_TYPE=<< parameters.molecule-instance-type >>" >> $BASH_ENV
-            source $BASH_ENV
-      - run:
-          name: Set AMI name
-          command: |
-            echo "export AMI_NAME=<< parameters.molecule-ami-name >>-*" >> $BASH_ENV
-            source $BASH_ENV
-      - run:
-          name: Test with molecule
-          command: |
-            molecule test --scenario-name vm
-          environment:
-            ANSIBLE_FORCE_COLOR: '1'
-            ANSIBLE_TASK_TIMEOUT: '600'
-            # AMI_NAME: stored in CircleCI environment variables
-            # AWS_DEFAULT_REGION: sotred in CircleCI environment variables
-            # CREATED_BY: stored in CircleCI environment variables
-            # EC2_REGION: stored in CircleCI environment variables
-            # INSTANCE_TYPE: stored in CircleCI environment variables
-            # KEYPAIR_NAME: sotred in CircleCI environment variables
-            # PLATFORM_NAME: sotred in CircleCI environment variables
-            PROFILE_TASKS_SORT_ORDER: 'none'
-            PROFILE_TASKS_TASK_OUTPUT_LIMIT: '200'
-            PY_COLORS: '1'
-            # SECURITY_GROUP_NAME: sotred in CircleCI environment variables
-            # VPC_SUBNET_ID: sotred in CircleCI environment variables
-            TZ: 'Asia/Tokyo'
-          no_output_timeout: 15m
-      - run:
-          name: Show Ansible version
-          command: |
-            pip list | grep ansible \
-            | GREP_COLORS='mt=01;34' egrep --color=always '[[:digit:]]' \
-            | GREP_COLORS='mt=01;34' egrep --color=always '\.' \
-            | GREP_COLORS='mt=01;33' egrep --color=always 'ansible.* '
-            ansible --version
-      - run:
-          name: Show Molecule version
-          command: molecule --version
+          role-session-name: << parameters.aws-resource-name >>
+          session-duration: '2100'
+      - molecule-ec2/execute:
+          ansible-user: << parameters.ansible-user >>
+          aws-ami-name: << parameters.aws-ami-name >>
+          aws-ami-owner-id: << parameters.aws-ami-owner-id >>
+          aws-instance-type: << parameters.aws-instance-type >>
+          aws-resource-name: << parameters.aws-resource-name >>
+          aws-vpc-subnet-id: << parameters.aws-vpc-subnet-id >>
+          circleci-timeout: << parameters.circleci-timeout >>
+          molecule-scenario-name: << parameters.molecule-scenario-name >>
   yamllint:
     executor: yamllint/default
     steps:
@@ -163,16 +124,26 @@ workflows:
           requires:
             - ansible-lint
       - molecule-ec2:
-          molecule-ami-name: 'centos7'
-          molecule-instance-type: 't2.medium'
-          molecule-ec2-tag: 'molecule_elastick_stack_install_centos7'
+          ansible-user: 'centos'
+          aws-ami-name: 'centos-stream8-1*'
+          aws-ami-owner-id: '808683561341'
+          aws-instance-type: 't2.medium'
+          aws-resource-name: 'molecule_elastick_stack_install_centos_stream8'
+          aws-vpc-subnet-id: 'subnet-022a704b3061b8b39'
+          circleci-timeout: '20m'
+          molecule-scenario-name: 'vm'
           context: AWS_OPENID_CONNECT_TOKENS
           requires:
             - ansible-lint
       - molecule-ec2:
-          molecule-ami-name: 'centos-stream8'
-          molecule-instance-type: 't2.medium'
-          molecule-ec2-tag: 'molecule_elastick_stack_install_centos_stream8'
+          ansible-user: 'centos'
+          aws-ami-name: 'centos7-1*'
+          aws-ami-owner-id: '808683561341'
+          aws-instance-type: 't2.medium'
+          aws-resource-name: 'molecule_elastick_stack_install_centos7'
+          aws-vpc-subnet-id: 'subnet-022a704b3061b8b39'
+          circleci-timeout: '20m'
+          molecule-scenario-name: 'vm'
           context: AWS_OPENID_CONNECT_TOKENS
           requires:
             - ansible-lint
