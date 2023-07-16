@@ -1,4 +1,4 @@
-[![CircleCI](https://circleci.com/gh/ansible-playbooks-mamono210/elastic-stack_install/tree/main.svg?style=svg)](https://circleci.com/gh/ansible-playbooks-mamono210/elastic-stack_install/tree/main)
+# This repository is deprecated, no more changes shall be made to this repository.
 
 This playbook installs Elastic Stack on CentOS7/CentOS8.
 
